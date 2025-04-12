@@ -1,0 +1,174 @@
+## Variables mostly at Networking level VPC subnets key and AMI ####
+
+variable "region" { default = "us-east-1" }
+variable "vpc_cidr" { default =  "10.16.32.0/21" }
+variable "vpc_name" { default = "kranthi" }
+
+variable "public_subnet_ips" { type="list", default = ["10.16.35.128/25", "10.16.39.128/25"] }
+variable "private_subnet_1a_ips" { type="list", default = ["10.16.32.0/24", "10.16.33.0/24", "10.16.34.0/25", "10.16.34.128/25", "10.16.35.0/25"] }
+variable "private_subnet_1b_ips" { type="list", default = ["10.16.36.0/24", "10.16.37.0/24", "10.16.38.0/25", "10.16.38.128/25", "10.16.39.0/25"] }
+variable "public_subnet" { type="list", default = ["public-subnet01-1a", "public-subnet02-1b"] }
+variable "private_subnet_1a" { type="list", default = ["private-subnet01", "private-subnet02","private-subnet03", "private-subnet04", "private-subnet05"] }
+variable "private_subnet_1b" { type="list", default = ["private-subnet01", "private-subnet02","private-subnet03", "private-subnet04", "private-subnet05"] }
+variable "az" { type="list", default = ["us-east-1a", "us-east-1b" ] }
+
+variable "kranthi_inst_ssh_key" {
+  description = "SSH Public Key"
+  default     = "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCqbDoboOKoTwtBOgXP6CmlMCGX/hyKyTqFHOqMPNhymIoIQuj6s9wwSUqeNXMkhvVkJarv6BeLyZw+VNSt79y+aNMIK4O/D/9F01mvmQ3XGRTgvJd04R9Oe7PSlUDAgAQX0Vv9XekjQRth50prdTbR+q0/tr3RYjiUQU2unZeTVd4YKFCLjyt3HtWcUh9zjLGTo52Y9XU297x1XHcUa03Rqjzuj+Do6qCPfdCRU33aywMs7XJlVSYMQ+evPenCxoTVA8hL/t1tH3cBsILoxS88d/qdKRsd7rHUrqBjkEpaeJED3Vnqd1Q3iAorLWrwvSwItvkm3wJA5caCfImsoaMd kranthi key"
+}
+variable environment { default = "staging" }
+variable project { default = "att" }
+variable "ami" { default = "ami-xxxxx" }
+#variable "subnet_1a" { default = "1" }
+#variable "subnet_1b" { default = "1" }
+variable "subnet_1a" { type="list", default = ["0", "1", "2", "3", "4"] }
+variable "subnet_1b" { type="list", default = ["0", "1", "2", "3", "4"] }
+#variable "subnet_1b" { default = "1" }
+
+variable "pvtsubnet0_1a" { default = "0" }
+variable "pvtsubnet0_1b" { default = "0" }
+variable "pvtsubnet1_1a" { default = "1" }
+variable "pvtsubnet1_1b" { default = "1" }
+variable "pvtsubnet2_1a" { default = "2" }
+variable "pvtsubnet2_1b" { default = "2" }
+variable "pvtsubnet3_1a" { default = "3" }
+variable "pvtsubnet3_1b" { default = "3" }
+variable "pvtsubnet4_1a" { default = "4" }
+variable "pvtsubnet4_1b" { default = "4" }
+
+variable "az_1a" { default = "0" }
+variable "az_1b" { default = "1" }
+
+#
+resource "aws_vpc" "kranthi" {
+    cidr_block = "${var.vpc_cidr}"
+    instance_tenancy = "default"
+#    enable_dns_support = "true"
+#    enable_dns_hostnames = "false"
+#    enable_classiclink = "false"
+    tags {
+        Name = "${var.vpc_name}"
+    }
+}
+
+
+# Subnets
+resource "aws_subnet" "kranthi-public-sub" {
+    count = "${length(var.public_subnet_ips)}"
+#    count_az= "${length(var.az)}"
+    vpc_id = "${aws_vpc.kranthi.id}"
+    cidr_block = "${element(var.public_subnet_ips, count.index)}"
+    availability_zone = "${element(var.az, count.index)}"
+    map_public_ip_on_launch = "true"
+
+    tags {
+        Name = "${format("krish-inst-public-%03d", count.index + 1)}"
+    }
+}
+resource "aws_subnet" "krish-inst-private-sub-1" {
+    count = "${length(var.private_subnet_1a_ips)}"
+    vpc_id = "${aws_vpc.kranthi.id}"
+    cidr_block = "${element(var.private_subnet_1a_ips, count.index)}"
+    availability_zone = "${element(var.az, 0)}"
+    map_public_ip_on_launch = "true"
+
+    tags {
+      Name = "${format("krish-inst_private_subnet_1a_%03d", count.index + 1)}"
+   }
+}
+resource "aws_subnet" "kranthi-private-sub-2" {
+    count = "${length(var.private_subnet_1b_ips)}"
+    vpc_id = "${aws_vpc.kranthi.id}"
+    cidr_block = "${element(var.private_subnet_1b_ips, count.index)}"
+    availability_zone = "${element(var.az, 1)}"
+    map_public_ip_on_launch = "true"
+
+    tags {
+      Name = "${format("kranthi_private_subnet_1b_%03d", count.index + 1)}"
+   }
+}
+
+
+# Internet GW
+resource "aws_internet_gateway" "att-igw" {
+    vpc_id = "${aws_vpc.kranthi.id}"
+
+    tags {
+        Name = "kranthi_internet_gw"
+    }
+}
+
+# route tables
+resource "aws_route_table" "att-public-rt" {
+    vpc_id = "${aws_vpc.krish-inst.id}"
+    route {
+        cidr_block = "0.0.0.0/0"
+        gateway_id = "${aws_internet_gateway.att-igw.id}"
+    }
+
+    tags {
+        Name = "krish-inst_public_rt"
+    }
+}
+
+# route associations public
+resource "aws_route_table_association" "att-public-rt" {
+    count = "${length(var.public_subnet_ips)}"
+    subnet_id = "${element(aws_subnet.krish-inst-public-sub.*.id, count.index)}"
+    route_table_id = "${aws_route_table.att-public-rt.id}"
+}
+
+resource "aws_nat_gateway" "natgw-1a" {
+  count = 1
+  allocation_id = "${data.aws_eip.natgw-1a.id}"
+  subnet_id     = "${element(aws_subnet.krish-inst-public-sub.*.id, 0 )}"
+  #depends_on = ["aws_internet_gateway.mod"]
+}
+
+resource "aws_nat_gateway" "natgw-1b" {
+  count = 1
+  allocation_id = "${data.aws_eip.natgw-1b.id}"
+  subnet_id     = "${element(aws_subnet.krish-inst-public-sub.*.id, 1 )}"
+  #depends_on = ["aws_internet_gateway.mod"]
+}
+
+# route tables for private
+resource "aws_route_table" "att-private-rt-1a" {
+    vpc_id = "${aws_vpc.krish-inst.id}"
+    route {
+        cidr_block = "0.0.0.0/0"
+        gateway_id = "${aws_nat_gateway.natgw-1a.id}"
+    }
+
+    tags {
+        Name = "krish-inst_private_rt_1a"
+    }
+}
+
+# route tables for private
+resource "aws_route_table" "att-private-rt-1b" {
+    vpc_id = "${aws_vpc.krish-inst.id}"
+    route {
+        cidr_block = "0.0.0.0/0"
+        gateway_id = "${aws_nat_gateway.natgw-1b.id}"
+    }
+
+    tags {
+        Name = "krish-inst_private_rt_1b"
+    }
+}
+
+
+# route associations private route table for 1a subnet
+resource "aws_route_table_association" "att-private-rt-association-1a" {
+    count = "${length(var.private_subnet_1a_ips)}"
+    subnet_id = "${element(aws_subnet.krish-inst-private-sub-1.*.id, count.index)}"
+    route_table_id = "${aws_route_table.att-private-rt-1a.id}"
+}
+
+# route associations private route table for 1b subnet
+resource "aws_route_table_association" "att-private-rt-association-1b" {
+    count = "${length(var.private_subnet_1b_ips)}"
+    subnet_id = "${element(aws_subnet.krish-inst-private-sub-2.*.id, count.index)}"
+    route_table_id = "${aws_route_table.att-private-rt-1b.id}"
+}

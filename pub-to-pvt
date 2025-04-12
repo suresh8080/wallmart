@@ -1,0 +1,78 @@
+--- How to connect "from public-server" to "private-servers" without key---
+ for example we have "one" public-server "three" pvt-ser's
+ first we need to copy the private-key(.pem file) into public-server through 
+ winscp and give the permissions to that private-key(.pem file) as 600 means 
+ read and write permissions to user like
+ For-Example : i copy the private-key(.pem file name as devops.pem)
+ into /tmp in pub-ser
+ login the public-server using ec2-user
+ 1. sudo su 
+ 2. cd
+ 3. chmod 600 /tmp/devops.pem  
+ 4. useradd kranthi
+ 5. visudo 
+    kranthi ALL=(ALL)  NOPASSWD: ALL
+    :wq!
+ 6. sudo vi /etc/hosts
+     here i gave three pvt-ser ip-adddresses and hostnames and saved
+     ex: 172.31.4.112 pvt-ser1
+         172.31.89.9  pvt-ser2
+	 172.31.23.215 pvt-ser3
+	 172.31.16.180 pub-ser
+	 :wq!
+ 7. sudo vi /etc/sysconfig/network
+    Here i gave there private servers hostnames and saved
+    ex: HOSTNAME=pvt-ser1
+        HOSTNAME=pvt-ser2
+	HOSTNAME=pvt-ser3
+	HOSTNAME=pub-ser
+	:wq!
+ 8. sudo hostname pub-ser
+ 9. sudo su kranthi (switch root to kranthi user)
+ 10. sudo ssh-keygen -t rsa
+     It means the above command generates the id_rsa.pub inside the .ssh copy 
+     the id_rsa.pub 
+     ex:1. cd .ssh
+        2. vi id_rsa.pub
+ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC4tScGEV6fe0+XmDkisBwsW/BF97NN7K3ptRt4UwApLD0puGq/X6natJCMcBT5WkdDhD9U4hSMtOHDv7pRP4XB+eK9Hy00hpjOqFcON3G+xnXuQcx03HZ7OKF21KWwUqqlvzaZx+Sr2ZLDheuujFfzfbHuc9TBygXONHIy7+l6Avbvau4T40hCQPex2d7rqU6elj5fYrt1v80VZkICStaEAHWTYqnYk+phxjLHKpLTjDRqRlggae8DwSKMlqplF9gqc52QyyuXKvPz0KYbFIlwGeBDffpkf9KCK8rodsrigN6rdn9YdFYndcc9r+kR7PkQy1gZYnX/QYV/YocSmOW7 devops  
+
+  copy the above key from ssh-rsa to eof and then move from pub-to-pvt servers
+ 11. ssh -i /tmp/devops.pem ec2-user@172.31.4.112
+      (172.31.4.112 is pvt-ser private ip)
+      it moves pub-pvt after enter above command 
+
+ 12.  [ec2-user@172.31.4.112]# sudo su
+ 13.  [root@172.31.4.112]# useradd kranthi
+ 14.  [root@172.31.4.112]# visudo
+          kranthi ALL=(ALL)  NOPASSWD: ALL
+	  :wq!
+ 15.  [root@172.31.4.112]# sudo su kranthi
+ 16.  [kranthi@172.31.4.112 root]# cd
+ 17.  [kranthi@172.31.4.112]#sudo vi /etc/hosts
+         172.31.4.112 pvt-ser1
+         172.31.89.9  pvt-ser2
+         172.31.23.215 pvt-ser3
+         172.31.16.180 pub-ser
+       :wq!
+ 18. [kranthi@172.31.4.112]# sudo vi /etc/sysconfig/network
+        HOSTNAME=pvt-ser1
+        HOSTNAME=pvt-ser2
+        HOSTNAME=pvt-ser3
+        HOSTNAME=pub-ser
+     :wq!
+ 19. [kranthi@172.31.4.112]# sudo hostname pvt-ser1
+ 20. [kranthi@pvt-ser1]#sudo ssh-keygen -t rsa
+ 21. [kranthi@pvt-ser1]# cd .ssh
+ 22. [kranthi@pvt-ser1 .ssh]# sudo vi authorized_keys
+       ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC4tScGEV6fe0+XmDkisBwsW/BF97NN7K3ptRt4UwApLD0puGq/X6natJCMcBT5WkdDhD9U4hSMtOHDv7pRP4XB+eK9Hy00hpjOqFcON3G+xnXuQcx03HZ7OKF21KWwUqqlvzaZx+Sr2ZLDheuujFfzfbHuc9TBygXONHIy7+l6Avbvau4T40hCQPex2d7rqU6elj5fYrt1v80VZkICStaEAHWTYqnYk+phxjLHKpLTjDRqRlggae8DwSKMlqplF9gqc52QyyuXKvPz0KYbFIlwGeBDffpkf9KCK8rodsrigN6rdn9YdFYndcc9r+kR7PkQy1gZYnX/QYV/YocSmOW7 devops
+       :wq!
+ 22. [kranthi@pvt-ser1 .ssh]# chmod 600 authorized_keys
+ 23. terminate the pvt-ser and test from pub-ser means open the public-server
+    
+     ex:
+     1.[kranthi@pub-ser ~]$ ssh pvt-ser1
+        after entering the above command it is connect the pub-ser to pvt-ser
+     
+
+
+

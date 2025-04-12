@@ -1,0 +1,16 @@
+---
+- hosts: web
+  become: yes
+  gather_facts: false
+  tasks:
+  - name: installing packages
+    yum:
+      name={{item}}
+      state=absent
+#      when: ansible_os_family == "Redhat"
+    with_items:
+     - git
+     - subversion
+     - wget
+     - ngnix
+    when: ansible_os_family == "RedHat"

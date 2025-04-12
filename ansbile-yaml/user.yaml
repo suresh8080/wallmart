@@ -1,0 +1,18 @@
+---
+- hosts: web
+  become_user: ansible
+  become_user: root
+  become: yes
+  tasks:
+  - name: creating users in client
+    user: name={{item}}
+    with_items:
+    - devops
+    - test
+    - kranthi
+  - name: adding sudoer list
+    lineinfile: "dest=/etc/sudoers backup=yes insertafter=EOF create=true line='{{item}} ALL=(ALL) NOPASSWD: ALL'"
+    with_items:
+    - devops
+    - test
+    - kranthi

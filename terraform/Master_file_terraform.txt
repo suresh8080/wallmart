@@ -1,0 +1,403 @@
+
+
+
+
+#### EBS creation Volume and Varibles ####
+
+variable "EBS_VOLUME_SIZE" {default = "50"}
+variable "EBS_DEL_WINDOW" { default = "7"}
+variable "EBS_VOLUME_TYPE" { default = "gp2"}
+variable "EBS_VOLUME_DEVICE" { default = "/dev/xvdh"}
+variable "EBSH_VOLUME_SIZE" {default = "100"}
+#variable "EBS_DEL_WINDOW" { default = "7"}
+variable "EBSH_VOLUME_TYPE" { default = "gp2"}
+variable "EBSH_VOLUME_DEVICE" { default = "/dev/xvdh"}
+variable "EBSF_VOLUME_SIZE" {default = "100"}
+#variable "EBS_DEL_WINDOW" { default = "7"}
+variable "EBSF_VOLUME_TYPE" { default = "gp2"}
+variable "EBSF_VOLUME_DEVICE" { default = "/dev/xvdh"}
+variable "EBSW_VOLUME_SIZE" {default = "500"}
+#variable "EBS_DEL_WINDOW" { default = "7"}
+variable "EBSW_VOLUME_TYPE" { default = "gp2"}
+variable "EBSG_VOLUME_SIZE" {default = "250"}
+#variable "EBS_DEL_WINDOW" { default = "7"}
+variable "EBSG_VOLUME_TYPE" { default = "gp2"}
+variable "EBSG_VOLUME_DEVICE" { default = "/dev/xvdh"}
+
+## Ebs Volumes creation and attachments #####
+
+# Encrypted volume creation for Instance us-east-1a
+resource "aws_ebs_volume" "Instance_1a_ebs_volume_create" {
+ # To restrict to specific avaliabilty zone us-east-1a [0]th element from var.az
+	count = "${var.ec2_mqtt_count_1a}"
+        availability_zone = "${element(var.az, 0)}"
+	encrypted = true
+	size = "${var.EBS_VOLUME_SIZE}"
+	type = "${var.EBS_VOLUME_TYPE}"
+	kms_key_id = "${aws_kms_key.kms_key_ebs.arn}"
+	tags {
+		Name = "krish-${var.environment}"
+	}
+}
+
+# krishach encrypted volume with ec2 instance
+resource "aws_volume_krishachment" "instance_1a_ebs_volume_krishach" {
+        count = "${var.ec2_mqtt_count_1a}"
+	device_name = "${var.EBS_VOLUME_DEVICE}"
+	volume_id = "${element(aws_ebs_volume.instance_1a_ebs_volume_create.*.id, count.index)}"
+        instance_id = "${element(aws_instance.krish_staging_instance_1a.*.id, count.index)}"
+	# instance_id = "${aws_instance.krish_staging_instance_1a.*.id}"
+}
+
+# Encrypted volume creation for instance use-east-1b
+resource "aws_ebs_volume" "instance_1b_ebs_volume_create" {
+ # To restrict to specific avaliabilty zone us-east-1b [0]th element from var.az
+        count = "${var.ec2_mqtt_count_1b}"
+        availability_zone = "${element(var.az, 1)}"
+        encrypted = true
+        size = "${var.EBS_VOLUME_SIZE}"
+        type = "${var.EBS_VOLUME_TYPE}"
+        kms_key_id = "${aws_kms_key.kms_key_ebs.arn}"
+        tags {
+                Name = "krish-${var.environment}"
+        }
+}
+
+# krishach encrypted volume with ec2 instance
+resource "aws_volume_krishachment" "instance_1b_ebs_volume_krishach" {
+        count = "${var.ec2_mqtt_count_1b}"
+        device_name = "${var.EBS_VOLUME_DEVICE}"
+        volume_id = "${element(aws_ebs_volume.instance_1b_ebs_volume_create.*.id, count.index)}"
+        instance_id = "${element(aws_instance.krish_staging_instance_1b.*.id, count.index)}"
+        # instance_id = "${aws_instance.krish_staging_instance_1b.*.id}"
+}
+
+
+
+
+### ELB TF ###
+
+## ELB variables Later decided not go with##
+
+variable "elb_name" { default = "elb-mqtt"}
+variable "elb_cert" { default = "arn:aws:acm:us-east-1:XXXXXXX:certificate/h12yahda-7b7t-49d3-82e6-050e23d432ec"}
+variable "elb_instance_port" { default = "8000"}
+variable "elb_instance_protocol" { default = "http"}
+variable "elb_lb_port" { default = "443"}
+variable "elb_lb_protocol" { default = "https"}
+variable "elb_cross_zone" { default = "true"}
+variable "elb_idle_timeout" { default = "400"}
+variable "elb_conn_drain" { default = "true"}
+variable "elb_conn_drain_timeout" { default = "400"}
+
+
+##  Ext -LB ####
+resource "aws_elb" "krish_inst_ext_elb" {
+  name = "krish-${var.environment}-sample-elb-ext"
+
+  listener {
+    instance_port     = 1883
+    instance_protocol = "tcp"
+    lb_port           = 1883
+    lb_protocol       = "tcp"
+  }
+
+  listener {
+    instance_port      = 1883
+    instance_protocol  = "tcp"
+    lb_port            = 8883
+    lb_protocol        = "ssl"
+    ssl_certificate_id = "${aws_acm_certificate.krish_inst_sample_cert.id}"
+  }
+
+  listener {
+    instance_port      = 8443
+    instance_protocol  = "tcp"
+    lb_port            = 8443
+    lb_protocol        = "ssl"
+    ssl_certificate_id = "${aws_acm_certificate.krish_inst_sample_cert.id}"
+#    ssl_certificate_id = "${var.ssl_certificate_id}"
+  }
+
+  health_check {
+    healthy_threshold   = 2
+    unhealthy_threshold = 2
+    timeout             = 3
+    target              = "TCP:1883"
+    interval            = 35
+  }
+#  count = 2
+  security_groups             = ["${aws_security_group.krish_inst_upload_ws_elb.id}"]
+#  subnets                     = ["${aws_subnet.krish-staging-public-sub.*.id[1]}"]
+     subnets                     = ["${aws_subnet.krish-staging-public-sub.*.id}"]
+#   subnets   = ["${element(aws_subnet.krish-staging-public-sub.*.id, 0 )}"]
+  internal                    = false
+  idle_timeout                = 400
+  connection_draining         = true
+  connection_draining_timeout = 400
+
+  instances = ["${aws_instance.krish_inst_sample_1a.*.id}", "${aws_instance.krish_inst_sample_1b.*.id}"]
+
+  tags {
+    Name  = "krish-${var.environment}-sample-elb_ext"
+    Owner = "krish_inst"
+  }
+}
+
+### Int -LB ####
+
+resource "aws_elb" "krish_inst_sample_intr_elb" {
+   # name = "krish_inst_sample_elb_int"
+  # name = "${var.environment}_sample_elb_int"
+  name = "krish-${var.environment}-sample-elb-int"
+
+  listener {
+    instance_port     = 1883
+    instance_protocol = "tcp"
+    lb_port           = 1883
+    lb_protocol       = "tcp"
+  }
+
+  listener {
+    instance_port      = 1883
+    instance_protocol  = "tcp"
+    lb_port            = 8883
+    lb_protocol        = "ssl"
+    ssl_certificate_id = "${var.ssl_certificate_id}"
+  }
+
+  listener {
+    instance_port      = 8443
+    instance_protocol  = "tcp"
+    lb_port            = 8443
+    lb_protocol        = "ssl"
+    ssl_certificate_id = "${var.ssl_certificate_id}"
+  }
+
+  health_check {
+    healthy_threshold   = 2
+    unhealthy_threshold = 2
+    timeout             = 3
+    target              = "TCP:1883"
+    interval            = 35
+  }
+
+  security_groups             = ["${aws_security_group.krish_inst_upload_ws_elb.id}"]
+#  subnets                     = ["${var.private_subnet_1a_ips}","${var.private_subnet_1b_ips}"]
+  subnets                     = ["${aws_subnet.krish-staging-private-sub-1.*.id[1]}", "${aws_subnet.krish-staging-private-sub-2.*.id[1]}" ]
+ internal                    = true
+  idle_timeout                = 400
+  connection_draining         = true
+  connection_draining_timeout = 400
+  instances = ["${aws_instance.krish_inst_sample_1a.*.id}", "${aws_instance.krish_inst_sample_1b.*.id}"]
+
+  /* instances = ["${aws_instance.sample.id}"] */
+
+tags {
+    Name  = "krish-${var.environment}_sample_elb_int"
+    Owner = "krish_inst"
+  }
+}
+
+
+### S3 bucket creation ###
+
+resource "aws_s3_bucket" "krishinst" {
+  bucket = "${var.s3_eventpersister_bucket}"
+  acl    = "private"
+
+  tags {
+    Name  = "att-${var.environment}-event_persister_bucket"
+    Owner = "att"
+  }
+}
+
+## elastic IP ###
+
+## Elastic IPs for Nat Gw and BAstion ##
+
+variable "public_ip_1a" { default = "56.194.212.15" }
+variable "public_ip_1b" { default = "21.26.108.19" }
+
+data "aws_eip" "natgw-1a" {
+ # vpc = true
+ public_ip = "${var.public_ip_1a}"
+}
+data "aws_eip" "natgw-1b" {
+ # vpc = true
+ public_ip = "${var.public_ip_1b}"
+}
+/*
+resource "aws_eip" "nat" {
+  vpc = true
+
+  tags {
+    Name = "krish_inst_eip_nat"
+  }
+}
+*/
+resource "aws_eip" "krish_inst_bastion" {
+  vpc = true
+
+  tags {
+    Name = "krish_inst_eip_bastion"
+  }
+}
+
+resource "aws_eip" "krish_inst_bastion_api" {
+  vpc = true
+
+  tags {
+    Name = "krish_inst_eip_bastion_api"
+  }
+}
+
+output "bastion_eip_allocation_id" {
+  value = "${aws_eip.krish_inst_bastion.id}"
+}
+
+output "bastion_eip_allocation_api_id" {
+  value = "${aws_eip.krish_inst_bastion_api.id}"
+}
+
+
+## Security Group ###
+
+# Instnace level SG's ##
+resource "aws_security_group" "krish_inst_dump" {
+  name        = "krish_inst_dump"
+  description = "Allow incoming HTTP and  connections."
+
+  ingress {
+    from_port   = 8883
+    to_port     = 8883
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  ingress {
+    from_port   = 1883
+    to_port     = 1883
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  ingress {
+    from_port   = 22
+    to_port     = 22
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  ingress {
+    from_port   = 80
+    to_port     = 80
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  ingress {
+    from_port   = 8080
+    to_port     = 8080
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  ingress {
+    from_port   = 9079
+    to_port     = 9079
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  ingress {
+    from_port   = 443
+    to_port     = 443
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  ingress {
+    from_port   = -1
+    to_port     = -1
+    protocol    = "icmp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  ingress {
+    from_port = 2379
+    to_port   = 2379
+    protocol  = "tcp"
+    self      = true
+  }
+
+  ingress {
+    from_port   = 2380
+    to_port     = 2380
+    protocol    = "tcp"
+    cidr_blocks = ["${var.vpc_cidr}"]  
+   self        = true
+  }
+
+  ingress {
+    from_port   = 4001
+    to_port     = 4001
+    protocol    = "tcp"
+   # cidr_blocks = ["${aws_subnet.krish-inst-public-sub.*.id}"]
+    cidr_blocks = ["${var.vpc_cidr}"]
+   self        = true
+  }
+
+  ingress {
+    from_port   = 7001
+    to_port     = 7001
+    protocol    = "tcp"
+#    cidr_blocks = ["${aws_subnet.krish-inst-public-sub.*.id}"]
+    cidr_blocks = ["${var.vpc_cidr}"]
+ 
+   self        = true
+  }
+
+  ingress {
+    from_port   = 8083
+    to_port     = 8083
+    protocol    = "tcp"
+#    cidr_blocks = ["${aws_subnet.krish-inst-public-sub.*.id}"]
+    cidr_blocks = ["${var.vpc_cidr}"]
+ 
+   self        = true
+  }
+ ingress {
+    from_port   = 8200
+    to_port     = 8200
+    protocol    = "tcp"
+#    cidr_blocks = ["${aws_subnet.krish-inst-public-sub.*.id}"]
+    cidr_blocks = ["${var.vpc_cidr}"]
+
+   self        = true
+  }
+
+  ingress {
+    from_port   = 8285
+    to_port     = 8285
+    protocol    = "tcp"
+    cidr_blocks = ["${var.vpc_cidr}"]
+
+#    cidr_blocks = ["${aws_subnet.krish-inst-public-sub.*.id}"]
+    self        = true
+  }
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  vpc_id = "${aws_vpc.krish-inst.id}"
+
+  tags {
+    Name  = "krish_${var.environment}_public_subnet_sg_001"
+    Owner = "krish_inst"
+  }
+}

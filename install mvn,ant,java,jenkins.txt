@@ -1,0 +1,144 @@
+    all option done in root user
+    [root@ip-172-31-44-95 ~]#
+    1  yum install wget
+    2  yum install unzip subversion git -y
+    3  lsblk
+    4  df -h
+    5  du -h
+    6  file -s /dev/xvdf
+    7  sudo mkfs -t ext4 /dev/xvdf
+    8  sudo mount /dev/xvdf /opt
+    9   lsblk
+   10  df -h
+	-----------JAVA SETUP----------
+       cd /opt 
+   1.[root@ip-172-31-44-95 opt]#
+   2  wget --no-cookies --no-check-certificate --header "Cookie: gpw_e24=http%3A%2F%2Fwww.oracle.com%2F; oraclelicense=accept-securebackup-cookie" "https://download.oracle.com/otn-pub/java/jdk/8u192-b12/750e1c8617c5452694857ad95c3ee230/jdk-8u192-linux-x64.tar.gz"
+   3  ls
+   4  tar xzf jdk-8u192-linux-x64.tar.gz
+   5  ls
+   6  cd /opt/jdk1.8.0_192/
+   7  #alternatives --install /usr/bin/java java /opt/jdk1.8.0_181/bin/java 2
+   8  #alternatives --config java
+   9  #alternatives --install /usr/bin/jar jar /opt/jdk1.8.0_181/bin/jar 2
+   10 #alternatives --install /usr/bin/javac javac /opt/jdk1.8.0_181/bin/javac 2
+   11 # alternatives --set jar /opt/jdk1.8.0_181/bin/jar
+   12 #alternatives --set javac /opt/jdk1.8.0_181/bin/javac
+   13 #java -version
+   14  cd
+   15  vi /etc/profile.d/java.sh
+export JAVA_HOME=/opt/jdk1.8.0_192
+export JRE_HOME=/opt/jdk1.8.0_192/jre
+export PATH=$PATH:/opt/jdk1.8.0_192/bin:/opt/jdk1.8.0_192/jre/bin
+             :wq!----> save and quit
+   16  source /etc/profile.d/java.sh
+   17  java -version
+
+	java version "1.8.0_192"
+	Java(TM) SE Runtime Environment (build 1.8.0_192-b13)
+	Java HotSpot(TM) 64-Bit Server VM (build 25.181-b13, mixed mode)
+
+---------------MAVEN SETUP--------------
+   1  cd /opt
+   [root@ip-172-31-44-95 opt]#
+   2  wget http://www-eu.apache.org/dist/maven/maven-3/3.5.4/binaries/apache-maven-3.5.4-bin.tar.gz
+   3  ls
+   4  sudo tar xzf apache-maven-3.5.4-bin.tar.gz
+   5  ls
+   6  # sudo ln -s apache-maven-3.5.4 maven
+   7  cd
+   8  sudo vi /etc/profile.d/maven.sh
+export M2_HOME=/opt/apache-maven-3.5.4
+export PATH=${M2_HOME}/bin:${PATH}
+           :wq!
+   9  source /etc/profile.d/maven.sh
+   10  mvn -version
+	Maven home: /opt/maven
+	Java version: 1.8.0_181, vendor: Oracle Corporation, runtime: /opt/jdk1.8.0_181/jre
+	Default locale: en_US, platform encoding: UTF-8
+	OS name: "linux", version: "3.10.0-862.el7.x86_64", arch: "amd64", family: "unix"
+
+    ---------------ANT SETUP--------------
+    1   yum install ant
+    2  cd /opt 
+    [root@ip-172-31-44-95 opt]#
+    3  wget http://mirrors.wuchna.com/apachemirror//ant/binaries/apache-ant-1.10.5-bin.tar.gz
+    4  tar -xf apache-ant-1.10.5-bin.tar.gz
+    5  cd
+    6   vi /etc/profile.d/ant.sh
+
+	export ANT_HOME=/opt/apache-ant-1.10.5
+	
+        :wq!
+
+    7  ant -version
+	Apache Ant(TM) version 1.9.2 compiled on January 22 2014
+
+     ----------------JENKINS SETUP--------------
+   1  cd /opt
+      [root@ip-172-31-44-95 opt]#
+   2  wget https://pkg.jenkins.io/redhat/jenkins-2.175-1.1.noarch.rpm
+   3  ls
+   4   rpm -ivh jenkins-2.175-1.1.noarch.rpm
+   5  ls
+   6  service jenkins status
+   7  service jenkins start
+   8  cat /var/lib/jenkins/secrets/initialAdminPassword
+         create the port number at AWS-->EC2-->network&security-->security groups-->inbound-->edit and create port
+  
+    -----------------tomcat 9-------------
+  1. wget http://mirrors.estointernet.in/apache/tomcat/tomcat-9/v9.0.19/bin/apache-tomcat-9.0.19.tar.gz
+  2. tar -xvf apache-tomcat-9.0.19.tar.gz
+  3. #mv apache-tomcat-9.0.12 tomcat9
+  4. cd /opt/apache-tomcat-9.0.19/bin
+  5. ./startup.sh
+  6. netstat -tnlp ------default port no:8080
+   if you need to change tomcat default port number
+   follow these steps
+   1. cd apache-tomcat-9.0.19/conf
+   2. vi server.xml
+       change the portnumber in server.xml file and save it
+    if we need to verify the deploy file is available or not in ManagerApp file we can give the user and password for tomcat  
+    in tomcat-users.xml file like below
+  3. vi tomcat-users.xml
+ <role rolename="manager-gui"/>
+ <role rolename="manager-script"/>
+ <user username="tomcat" password="tomcat" roles="manager-gui,manager-script"/> 
+  4. and specify the comment in  vi webapps/manager/META-INF/context.xml   
+  comment this text like below
+  <!--
+  <Valve className="org.apache.catalina.valves.RemoteAddrValve"
+         allow="127\.\d+\.\d+\.\d+|::1|0:0:0:0:0:0:0:1" />
+   -->
+  
+	---------------GRADLE--------------
+ 1. cd /opt
+ 2. sudo wget https://services.gradle.org/distributions/gradle-3.4.1-bin.zip
+ 3. sudo mkdir /opt/gradle
+ 4. sudo unzip -d /opt/gradle gradle-3.4.1-bin.zip
+ 5. sudo vi /etc/profile.d/gradle.sh
+    export PATH=$PATH:/opt/gradle/gradle-3.4.1/bin
+    :wq!
+ 6. gradle -v
+ 
+    You should see the following output.
+
+------------------------------------------------------------
+Gradle 3.4.1
+------------------------------------------------------------
+
+Build time:   2017-03-03 19:45:41 UTC
+Revision:     9eb76efdd3d034dc506c719dac2955efb5ff9a93
+
+Groovy:       2.4.7
+Ant:          Apache Ant(TM) version 1.9.6 compiled on June 29 2015
+JVM:          1.8.0_121 (Oracle Corporation 25.121-b13)
+OS:           Linux 3.10.0-514.10.2.el7.x86_64 amd64
+	
+	
+	
+     ------------------nexus---------------
+   1. wget http://download.sonatype.com/nexus/oss/nexus-2.11.2-06-bundle.tar.gz 
+
+
+figlet link: https://rpmfind.net/linux/dag/redhat/el6/en/x86_64/dag/RPMS/figlet-2.2.2-1.el6.rf.x86_64.rpm

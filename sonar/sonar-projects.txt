@@ -1,0 +1,5 @@
+https://github.com/SonarSource/sonar-scanning-examples.git
+https://github.com/scmgalaxy/java-sonar-runner-simple.git
+https://github.com/mebusw/maven-sonar-example.git
+
+https://www.linuxtechi.com/install-apache-subversion-svn-centos-7/

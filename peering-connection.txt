@@ -1,0 +1,50 @@
+-----Peering connection------
+create two different networks
+ex: 1. 172.31.0.0/16
+    2. 10.17.0.0/26
+share both public keys(id_rsa.pub) to each machines
+1. select peering connection under vpc
+virtual private cloud-->peering connections 
+2. give name of peering connetion
+ex: 1) Peering connection name tag : test-peering
+    2) vpc(Requester): df-vpc(172.31.0.0/16) 
+ if same aws acoount select my account radio button if different select another account radio button
+ ex:using same account
+** select another VPC to peer with-->	my account if same region select this region radio button
+3. give accepter vpc name (another network
+ex: 1)vpc(Accepter): cust-vpc (10.16.0.0/26)
+And press create peering connection button
+
+4. Then accept the request from requestvpc under 
+virtual private cloud-->peering connections-->Actions-->Acceptrequest
+5. give the network range of request vpc network under both route tables
+** Route tables-->df-rt-->routes-->Edit routes
+    Destination    Target                status
+ex: 172.31.0.0/16 pcx-0d98034e28a143653   active
+
+6. another route table
+** Route tables-->cust-rt-->routes-->Edit routes
+   Destination    Target                status
+ex: 10.16.0.0/26 pcx-0d98034e28a143653   active
+
+7. give allow access in security-grop
+--Now check the peering connection using both different network machines--
+
+[devops@ip-172-31-77-158 ~]$ ping 10.16.0.4
+PING 10.16.0.4 (10.16.0.4) 56(84) bytes of data.
+64 bytes from 10.16.0.4: icmp_seq=1 ttl=64 time=0.984 ms
+64 bytes from 10.16.0.4: icmp_seq=2 ttl=64 time=1.06 ms
+64 bytes from 10.16.0.4: icmp_seq=3 ttl=64 time=1.09 ms
+64 bytes from 10.16.0.4: icmp_seq=4 ttl=64 time=1.08 ms
+64 bytes from 10.16.0.4: icmp_seq=5 ttl=64 time=1.06 ms
+
+--same way check peering in another machine--
+
+[devops@ip-10-16-0-4 ~]$ ping 172.31.77.158
+PING 172.31.77.158 (172.31.77.158) 56(84) bytes of data.
+64 bytes from 172.31.77.158: icmp_seq=1 ttl=64 time=1.02 ms
+64 bytes from 172.31.77.158: icmp_seq=2 ttl=64 time=1.86 ms
+64 bytes from 172.31.77.158: icmp_seq=3 ttl=64 time=1.05 ms
+
+if peering is successfully created visible in machines like above
+

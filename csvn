@@ -1,0 +1,41 @@
+
+install java (minimum required version 1.6) before config the csvn 
+1.create user 
+ex: useradd svn
+and give root privillages to svn
+ex: visudo
+svn ALL=(ALL) NOPASSWD: ALL
+2. cd /opt
+3.sudo wget https://www.collab.net/system/files/CollabNetSubversionEdge-5.2.3_linux-x86_64.tar.gz(if link is not work you can download
+from browser and copy CollabNetSubversionEdge-5.2.3_linux-x86_64.tar.gz from winscp and untar)
+4. ls
+CollabNetSubversionEdge-5.2.3_linux-x86_64.tar.gz
+5. tar -xvf CollabNetSubversionEdge-5.2.3_linux-x86_64.tar.gz
+6. ls
+ csvn
+7. sudo chown -R svn:svn csvn
+8. sudo su svn
+9. cd csvn/data/conf
+10. vi csvn.conf.dist
+uncomment the JAVA_HOME="give path of java"
+uncomment the RUN_AS_USER=svn(creating username)
+11. cd /opt/csvn/bin
+12. ./csvn start (start with svn user)
+
+Starting CSVN Console...
+...
+CSVN Console started
+Waiting for application to initialize (this may take a minute)...................................
+CSVN Console is ready at http://localhost:3343/csvn
+
+13. ./csvn status
+
+CSVN Console is running: PID:18066, Wrapper:STARTED, Java:STARTED
+
+14. netstat -tnlp
+tcp6       0      0 :::3343                 :::*                    LISTEN      17245/java
+
+15. after listening the csvn port 3343 and hit the browser using pub-ip
+ex: http://35.175.120.84:3343/csvn
+username: admin
+password: admin

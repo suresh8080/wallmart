@@ -1,0 +1,54 @@
+	-----installation of ansible and configuration-----      
+create id_rsa.pub key at public server and pass public-key to all private-servers and give private ip's hostnames in all private-servers
+In private-servers create authorized_keys file inside .ssh folder and insert the id_rsa.pub key data in authorized_keys file
+ex: "vi .ssh/authorized_keys" and give the permissions 600 mode and ownership is ansible in all private-servers
+create ssh key like following command
+[root@172.31.40.255 ~]# ssh-keygen -t rsa
+
+[root@172.31.40.255 ~]#useradd ansible
+[root@172.31.40.255 ~]#visudo
+   ansible         ALL=(ALL)       NOPASSWD: ALL
+ :wq!
+[root@172.31.40.255 ~]#sudo yum -y update
+[root@172.31.40.255 ~]#sudo yum -y install vim wget 
+[root@172.31.40.255 ~]#sudo mkdir /tmp/ansible/; cd /tmp/ansible 
+[root@172.31.40.255 ansible~]#sudo wget https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
+[root@172.31.40.255 ~]#sudo yum -y install epel-release-latest-7.noarch.rpm
+[root@172.31.40.255 ~]#sudo yum -y install ansible; ansible --version
+create user ansible and give root privillages and add all private hosts in /etc/hosts and 
+give hostnames in /etc/sysconfig/network
+
+for ex:vi /etc/hosts
+172.31.0.140   pvt1
+172.31.91.104  pvt2
+172.31.59.108  pvt3
+172.31.40.255  ansible-server
+
+
+for ex:vi /etc/sysconfig/network
+HOSTNAME=pvt1
+HOSTNAME=pvt2
+HOSTNAME=pvt3
+HOSTNAME=ansible-server 	 
+
+
+[root@172.31.40.255 ~]#sudo hostname ansible-server	 
+[root@172.31.40.255 ~]#sudo su ansible
+[ansible@ansbile-server ~]# sudo chown -R ansible:ansible /etc/ansible
+[ansible@ansbile-server ~]# vi ansible.cfg
+
+[defaults]
+hostfile=inventory
+remote_user=ansible
+become_user=root
+become=yes
+host_key_checking=false 
+
+[ansible@ansbile-server ~]#vi inventory
+[web]
+pvt1
+pvt2
+[app]
+pvt3
+
+NOTE: all files and directories ownership as "ansible" user  

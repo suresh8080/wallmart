@@ -1,0 +1,10 @@
+---
+- hosts: web
+  become: yes
+  tasks:
+  - name: installing HTTPD
+    yum: name=httpd state=present
+  - name: copying a file
+    copy: src=index.html dest=/var/www/html
+  - name: restarting service
+    service: name=httpd name=restarted

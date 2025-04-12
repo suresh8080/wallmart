@@ -1,0 +1,62 @@
+==GRAYLOG CONFIGURATION==
+------Install elasticsearch------
+1.sudo yum install java -y
+2.sudo vi /etc/yum.repos.d/elasticsearch.repo
+[elasticsearch-5.x]
+name=Elasticsearch repository for 5.x packages
+baseurl=https://artifacts.elastic.co/packages/5.x/yum
+gpgcheck=1
+gpgkey=https://artifacts.elastic.co/GPG-KEY-elasticsearch
+enabled=1
+autorefresh=1
+type=rpm-md
+
+:wq!(save ad quit)
+3.sudo rpm --import https://artifacts.elastic.co/GPG-KEY-elasticsearch
+4.sudo yum -y install elasticsearch
+5.sudo vim /etc/elasticsearch/elasticsearch.yml
+Find the following line, uncomment it and change the value from my-application to graylog.
+        cluster.name: graylog
+		:wq! (save and quit)
+6.You can start Elasticsearch and enable it to automatically start at boot time
+     sudo systemctl enable elasticsearch
+     sudo systemctl start elasticsearch
+7.Elasticsearch is now running on port 9200.
+------Install Mongodb------
+1.sudo vi /etc/yum.repos.d/mongodb.repo
+[mongodb-org-3.4]
+name=MongoDB Repository
+baseurl=https://repo.mongodb.org/yum/amazon/2013.03/mongodb-org/3.4/x86_64/
+gpgcheck=1
+enabled=1
+gpgkey=https://www.mongodb.org/static/pgp/server-3.4.asc
+
+   :wq! (save and quit)
+2.sudo yum -y install mongodb-org
+3.sudo systemctl enable mongod
+4.sudo systemctl start mongod
+5.sudo systemctl status mongod   
+------Install Graylog server------
+1.sudo rpm -Uvh https://packages.graylog2.org/repo/packages/graylog-2.3-repository_latest.rpm
+2.sudo yum -y update
+3.sudo yum -y install graylog-server
+4.sudo wget https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
+5.sudo yum -y install epel-release-latest-7.noarch.rpm
+6.sudo yum -y install pwgen
+7.pwgen -N 1 -s 96
+pJqhNbdEY9FtNBfFUtq20lG2m9daacmsZQr59FhyoA0Wu3XQyVZcu5FedPZ9eCiDfjdiYWfRcEQ7a36bVqxSyTzcMMx5Rz8v
+8.echo -n StrongPassword | sha256sum (Replace StrongPassword with the password you wish to set for admin user. You will see)
+05a181f00c157f70413d33701778a6ee7d2747ac18b9c0fbb8bd71a62dd7a223  -
+9.sudo vi /etc/graylog/server/server.conf
+    Uncomment and modify the values following lines
+   password_secret = pJqhNbdEY9FtNBfFUtq20lG2m9daacmsZQr59FhyoA0Wu3XQyVZcu5FedPZ9eCiDfjdiYWfRcEQ7a36bVqxSyTzcMMx5Rz8v (above generated pwgen password)
+   root_password_sha2 = 05a181f00c157f70413d33701778a6ee7d2747ac18b9c0fbb8bd71a62dd7a223  - (above generated sha256sum password)
+   rest_listen_uri = http://0.0.0.0:12900
+   rest_transport_uri = http://public-amazon-ip:12900
+   web_listen_uri = http://0.0.0.0:9000
+   
+   :wq!(save and quit)
+   
+public-ip:9000(graylog-port)   
+
+

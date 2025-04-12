@@ -1,0 +1,43 @@
+------sonarqube--------
+
+1. create a user 
+   ex: useradd sonar
+2. cd /opt
+3. wget https://binaries.sonarsource.com/Distribution/sonarqube/sonarqube-7.6.zip
+4. unzip sonarqube-7.6.zip
+   Change Sonarqube-7.6 ownership as sonar
+5. sudo su sonar
+6. sudo chown -R sonar:sonar /opt/sonarqube-7.6
+7. cd /opt/sonarqube-7.6/bin/linux-x86-64
+8. ./sonar.sh start
+   sonar port : 9000
+   ex: localhost:9000
+------sonar-runner-------
+
+1. sudo su
+2. cd /opt
+3. wget http://search.maven.org/remotecontent?filepath=org/codehaus/sonar/runner/sonar-runner-dist/2.4/sonar-runner-dist-2.4.zip
+4. unzip remotecontent?filepath=org%2Fcodehaus%2Fsonar%2Frunner%2Fsonar-runner-dist%2F2.4%2Fsonar-runner-dist-2.4.zip
+5. cd  sonar-runner-2.4/conf
+6. vi sonar-runner.properties
+   uncomment the following below text and add private-ip of sonarqube
+         sonar.host.url=http://<private-ip of sonarqube>:9000
+7. cd ../bin/
+8. git clone https://github.com/mebusw/maven-sonar-example.git  (java project for testing puprose)
+9. cd maven-sonar-example
+10. mvn install -Dmaven.test.skip=true
+11. vi sonar-project.properties (add project details and path of project)
+    follow my sonar-project.properties file
+12. cd ../bin/
+13. vi sonar-runner (In this file add your project path and java path and sonar-runner path)
+     
+    PROJECT_HOME=`pwd`
+    export PROJECT_HOME=/opt/sonar-runner-2.4/bin/maven-sonar-example/
+    echo $PROJECT_HOME
+    export SONAR_RUNNER_HOME=/opt/sonar-runner-2.4/
+    export PATH=$PATH:$SONAR_RUNNER_HOME/bin	 	
+	:wq!
+	
+14. ./sonar-runner
+
+	

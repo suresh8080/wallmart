@@ -1,0 +1,49 @@
+              -----SVN-process-----
+  
+1. create new "repository" in "visualSVN" and copy the "repository-url"
+2. open command prompt
+3. cd desktop
+4. mkdir svn-repo
+5. cd svn-repo
+6. svn co repository-url
+7. cd repository
+8. cd trunk
+    create one file in trunk and save
+9. cd trunk
+10. svn add filename
+11. svn commit -m "message"
+  open visualSVN and copy the trunk-url 
+12. cd ..
+13. svn copy trunk-url branches/b_1.0
+  do modifications if needed in file
+14. svn commit -m "message"
+15. svn update
+16. cd trunk
+    open visulaSVN and copy the b_1.0-url
+17. svn merge b_1.0-url trunk
+18. svn update
+19. svn commit -m "message"
+
+          ---------git-process----------
+1. install gitbash in windows
+2. copy the github repo-url on browser
+3. open the gitbash 
+4. mkdir desktop/git-repo
+5. cd desktop/gitrepo
+6. git clone <github-repository-url>
+7. vi filename
+    ----------
+      ------data------
+           ---------------
+  :wq!
+8. git status
+9. git add filename
+10. git status
+11. git commit -m "message"
+  if new user then add your credentials
+12. git config --global user.name "your name"
+13. git config --global user.email "your github mail"
+14. git push 
+   Here visible github popup window in that enter your github credentials(if new user)
+15. git push -u origin master   
+	
